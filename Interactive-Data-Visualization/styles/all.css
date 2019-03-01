@@ -1,0 +1,120 @@
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+body{
+  font-family: 'Josefin Sans', sans-serif;
+
+}
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+
+div.tooltip {
+  position: absolute;
+  text-align: right;
+  width: 120px;
+  height: 35px;
+  padding: 2px;
+  font: 20px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+  font-family: 'Josefin Sans', sans-serif;
+
+}
+
+.tooltip {
+  position: absolute;
+  font-size: 12px;
+  width:  auto;
+  height: auto;
+  pointer-events: none;
+  background-color: white;
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+#pic {
+  background-color: #15243C;
+  width: 100%;
+}
+
+#pic img {
+  display: block;
+  margin: auto;
+}
+
+#buttons {
+  display: flex;
+  margin: auto;
+  width: 45%;
+}
+
+button {
+  background-color: #15243C;
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  height: 50px;
+  margin: 20px auto;
+  width: 140px;
+
+}
+
+#graph {
+  width: 100%;
+}
+
+svg {
+  display: block;
+  margin: auto;
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+a {
+  color: steelblue;
+  font-style: italic;
+  font-weight: bold;
+}
+
+.title{
+  text-align: center;
+  font-family: 'Josefin Sans', sans-serif;
+  padding-left: 6%;
+  padding-right:6%;
+  font-size: 50px;
+  padding-top: 1%;
+}
+
+.paragraph{
+  text-align: center;
+  font-family: 'Open Sans', sans-serif;
+  padding-left: 15%;
+  padding-right:15%;
+}
+
+.subtitle {
+  font-size: 24px;
+  text-align: center;
+  padding-top: 1%;
+  padding-left: 15%;
+  padding-right:15%;
+}
+
+button:focus {
+  outline: none;
+  background-color: steelblue;
+}
+
+.number {
+  font-size: 16px;
+  font-style: italic;
+}
+
+.inactive {
+  fill: #ccc;
+}

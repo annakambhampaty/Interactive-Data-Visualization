@@ -1,0 +1,379 @@
+<html>
+
+<head>
+    <script src="//d3js.org/d3.v4.min.js"></script>
+    <script src="//d3js.org/topojson.v2.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+    <title>Most Important Countries?</title>
+    <link rel="stylesheet" type="text/css" href="styles/all.css" media="all" />
+    <link href="https://fonts.googleapis.com/css?family=Josefin+Sans|Open+Sans" rel="stylesheet">
+    <meta charset="utf-8">
+</head>
+
+
+<body>
+    <div>
+      <h1 class="title">
+        Most Important Countries in the World According to Reuters
+      </h1>
+        <div class="subtitle">
+          <a href="https://www.washingtonpost.com/news/the-fix/wp/2014/03/19/americans-read-headlines-and-not-much-else/?utm_term=.8cf30a893256">
+            Americans read headlines, not news.</a> -
+          6 in 10 acknowledge not reading past the headline.
+        </div><br/>
+        <p class = "paragraph">
+          Here is a list of
+          some of the most commonly mentioned countries in the headlines of the
+          News-Wire run by Reuters for 2017. I thought it would be interesting to
+          explore a country's headline mentions with its GDP, happiness level, and
+          amount of trust citizens hold in its government.
+        </p>
+    </div>
+
+     <div class="btn-group" data-toggle="buttons" align="center">Plot by:
+    <label class="btn btn-primary active">
+      <input type="radio"  onclick="showGDPGraph();" name="options" id="option1" checked > GDP
+    </label>
+    <label class="btn btn-primary">
+      <input type="radio" name="options" id="option2" onclick="showHappyGraph();" > Happiness
+    </label>
+    <label class="btn btn-primary">
+      <input type="radio" name="options" id="option3" onclick="thirdGraph();"> Trust in Gov
+    </label>
+  </div>
+
+    <div id="graph_svg">
+<!-- 	    <svg id="graph_svg" width="1200" height="1000" /> -->
+    </div>
+
+
+    
+
+
+
+    <script>
+
+      var records;
+      var headlines =[];
+      var publish_time =[];
+      var countries = {
+        "China": 0,
+        "Japan": 0,
+        "United States": 0
+      };
+      var countriesString = [];
+
+      //scaling function
+      var xScaleHappiness = d3.scaleLinear()
+        .domain([2.693000078, 7.537000179])
+        .range([100, 1180]);
+
+      var xScaleGDP = d3.scaleLinear()
+        .domain([0,2])
+        .range([100,1180])
+
+         var xScaleTrust = d3.scaleLinear()
+        .domain([0,.5])
+        .range([100,1180])
+
+
+      var yScale = d3.scaleLinear()
+        .domain([15000, 0])
+        .range([50, 880]);
+
+      //clean data
+      var parseRow = function(row) {
+        return row;
+      }
+
+      function getCol(data,column){
+        values = [];
+        for(var i=0;i<data.length;i++){
+          values.push(data[i][column]);
+        }
+        return values
+      }
+
+      function getWordCounts(headLineList){
+        for (var i = 0; i < countriesString.length; i++){
+          for (var j = 0; j < headLineList.length; j++){
+            if (headLineList[j].includes(countriesString[i])){
+              if (countries[countriesString[i]] >0){
+                countries[countriesString[i]] = countries[countriesString[i]]+1;
+              } else { countries[countriesString[i]] = 1;
+              }
+            }
+          }
+        }
+        return countries;
+      }
+
+      //get the data
+    d3.queue()
+    .defer(d3.csv, "data/reuters-newswire-2017.csv", parseRow)
+    .defer(d3.csv, "world-happiness-report/2017.csv",parseRow)
+    .await(callback);
+
+    function callback (error, rawData, happyData) {
+      records = rawData;
+
+      happiness2017 = happyData;
+
+      happiness2017.sort(function(a, b) {
+        var textA = a.Country.toUpperCase();
+        var textB = b.Country.toUpperCase();
+        return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+        });
+
+      happiness2017.forEach(function(d){
+        countriesString.push(d.Country);
+      })
+
+      records.forEach(function(d){
+        publish_time.push(d.publish_time);
+      })
+
+      records.forEach(function(d){
+        headlines.push(d.headline_text);
+      })
+
+      countryCount = getWordCounts(headlines);
+      var countryVals = Object.keys(countryCount).map(function(key) {return countryCount[key];});
+
+      happiness2017.forEach(function(elem) {
+        var newsOccurances = countryCount[elem["Country"]];
+        elem["Count"] = newsOccurances == undefined ? 0 : newsOccurances;
+      });
+      happiness2017.columns.push("Count");
+
+      showGDPGraph();
+    }
+
+    function showHappyGraph() {
+
+
+      var s = d3.selectAll('svg');
+      s.remove();
+
+      var svg_graph = d3.select("#graph_svg").append("svg")
+        .attr("width",1400)
+        .attr("height",950);
+
+      var div = d3.select("#graph_svg").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+      var happinessVals = [];
+      for (var i in happiness2017){
+        var val = parseFloat(happiness2017[i]["Happiness_Score"]);
+        if(isNaN(val)) continue;
+        happinessVals.push(val);
+      };
+
+
+
+
+      happinessVals = Object.keys(happinessVals).map(function(key) {return happinessVals[key];});
+      var min = Math.min.apply(0,happinessVals);
+
+      var max = Math.max.apply(0,happinessVals);
+
+      var xAxis = d3.axisBottom(xScaleHappiness);
+      var yAxis = d3.axisLeft(yScale);
+
+      svg_graph.append("g")
+      .attr("transform","translate(0,880)")
+      .call(xAxis);
+
+      svg_graph.append("g")
+      .attr("transform","translate(100,0)")
+      .call(yAxis);
+
+      svg_graph.append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", "rotate(-90,500,0)translate(0,-450)")
+      .style("font-family", "Josefin Sans")
+      .style("font-size", "20px")
+      .text("Headline Mentions");
+
+      svg_graph.append("text")
+      .attr("transform", "translate(600, 920)")
+      .style("font-family", "Josefin Sans")
+      .style("font-size", "20px")
+      .text("Happiness");
+
+      svg_graph.selectAll(".dot")
+        .data(happiness2017)
+        .enter().append("circle")
+        .attr("class","dot")
+        .attr("r", 5)
+        .attr("cx", function(d) { return xScaleHappiness(d.Happiness_Score); })
+        .attr("cy", function(d) { return yScale(d.Count); })
+        .on("mouseover", function(d) {
+           div.transition()
+             .duration(200)
+             .style("opacity", .9);
+           div.html(d.Country + "<br/><div class='number'>" + d.Count.toLocaleString() +" headlines</div>" )
+             .style("left", (d3.event.pageX + 10) + "px")
+             .style("top", (d3.event.pageY - 15) + "px");
+           })
+        .on("mouseout", function(d) {
+           div.transition()
+             .duration(500)
+             .style("opacity", 0);
+           });
+    }
+
+     function showGDPGraph() {
+      var s = d3.selectAll('svg');
+      s.remove();
+
+      var svg_graph = d3.select("#graph_svg").append("svg")
+        .attr("width",1400)
+        .attr("height",950);
+
+      var div = d3.select("#graph_svg").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+      var gdpVals = [];
+      for (var i in happiness2017){
+        var val = parseFloat(happiness2017[i]["Economy_GDP_per_Capita"]);
+        if(isNaN(val)) continue;
+        gdpVals.push(val);
+      };
+
+
+      gdpVals = Object.keys(gdpVals).map(function(key) {return gdpVals[key];});
+      var gdpMin = Math.min.apply(0,gdpVals);
+
+      var gdpMax = Math.max.apply(0,gdpVals);
+
+
+      var xAxis = d3.axisBottom(xScaleGDP);
+      var yAxis = d3.axisLeft(yScale);
+
+      svg_graph.append("g")
+      .attr("transform","translate(0,880)")
+      .call(xAxis);
+
+      svg_graph.append("g")
+      .attr("transform","translate(100,0)")
+      .call(yAxis);
+
+      svg_graph.append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", "rotate(-90,500,0)translate(0,-450)")
+      .style("font-family", "Josefin  Sans")
+      .style("font-size", "20px")
+      .text("Headline Mentions");
+
+      svg_graph.append("text")
+      .attr("transform", "translate(600, 920)")
+      .style("font-family", "Josefin Sans")
+      .style("font-size", "20px")
+      .text("GDP");
+
+      svg_graph.selectAll("dot")
+        .data(happiness2017)
+      .enter().append("circle")
+        .attr("r", 5)
+        .attr("cx", function(d) { return xScaleGDP(d.Economy_GDP_per_Capita); })
+        .attr("cy", function(d) { return yScale(d.Count); })
+        .style("opacity", "0.75")
+       .on("mouseover", function(d) {
+           div.transition()
+             .duration(200)
+             .style("opacity", .9);
+           div.html(d.Country + "<br/><div class='number'>" + d.Count.toLocaleString() +" headlines</div>")
+             .style("left", (d3.event.pageX + 10) + "px")
+             .style("top", (d3.event.pageY - 15) + "px");
+           })
+        .on("mouseout", function(d) {
+           div.transition()
+             .duration(500)
+             .style("opacity", 0);
+           });
+
+    }
+
+
+     function thirdGraph() {
+      var s = d3.selectAll('svg');
+      s.remove();
+
+      var svg_graph = d3.select("#graph_svg").append("svg")
+        .attr("width",1400)
+        .attr("height",950);
+
+      var div = d3.select("#graph_svg").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+      var trustVals = [];
+      for (var i in happiness2017){
+        var val = parseFloat(happiness2017[i]["Trust_Government_Corruption"]);
+        if(isNaN(val)) continue;
+        trustVals.push(val);
+      };
+
+
+
+
+      trustVals = Object.keys(trustVals).map(function(key) {return trustVals[key];});
+      var trustMin = Math.min.apply(0,trustVals);
+
+      var trustMax = Math.max.apply(0,trustVals);
+
+      var xAxis = d3.axisBottom(xScaleTrust);
+      var yAxis = d3.axisLeft(yScale);
+
+      svg_graph.append("g")
+      .attr("transform","translate(0,880)")
+      .call(xAxis);
+
+      svg_graph.append("g")
+      .attr("transform","translate(100,0)")
+      .call(yAxis);
+
+      svg_graph.append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", "rotate(-90,500,0)translate(0,-450)")
+      .style("font-family", "Josefin Sans")
+      .style("font-size", "20px")
+      .text("Headline Mentions");
+
+      svg_graph.append("text")
+      .attr("transform", "translate(600, 920)")
+      .style("font-family", "Josefin Sans")
+      .style("font-size", "20px")
+      .text("Trust in Government");
+
+      svg_graph.selectAll("dot")
+        .data(happiness2017)
+      .enter().append("circle")
+        .attr("r", 5)
+        .attr("cx", function(d) { return xScaleTrust(d.Trust_Government_Corruption); })
+        .attr("cy", function(d) { return yScale(d.Count); })
+       .on("mouseover", function(d) {
+           div.transition()
+             .duration(200)
+             .style("opacity", .9);
+           div.html(d.Country + "<br/><div class='number'>" + d.Count.toLocaleString() +" headlines</div>")
+             .style("left", (d3.event.pageX + 10) + "px")
+             .style("top", (d3.event.pageY - 15) + "px");
+           })
+        .on("mouseout", function(d) {
+           div.transition()
+             .duration(500)
+             .style("opacity", 0);
+           });
+    }
+
+
+
+    </script>
+
+</body>
+
+</html>
